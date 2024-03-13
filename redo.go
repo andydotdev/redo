@@ -114,7 +114,7 @@ func FnInRefr[IN any](
 //
 // The function will be retried following the rules described in the package
 // documentation, and will return the values of the first successful run or the
-// final unsuccessful run. It is a combination of [FnIn] and [FNOut].
+// final unsuccessful run. It is a combination of [FnIn] and [FnOut].
 func FnIO[IN, OUT any](
 	ctx context.Context,
 	fn func(IN) (OUT, error),
@@ -133,7 +133,7 @@ func FnIO[IN, OUT any](
 // Where IN is an input argument fnArg of any type and OUT is a return value of
 // any type.The initial input value for fn is passed using the fnArg argument
 // and will be refreshed using refreshFn for subsequent retries, if needed. It
-// is a combination of [FnInRefr] and [FNOut].
+// is a combination of [FnInRefr] and [FnOut].
 func FnIORefr[IN, OUT any](
 	ctx context.Context,
 	fn func(IN) (OUT, error),
@@ -298,7 +298,7 @@ func FnInCtxRefr[IN any](
 //
 // The function will be retried following the rules described in the package
 // documentation, and will return the values of the first successful run or the
-// final unsuccessful run. It is a combination of [FnInCtx] and [FNOutCtx].
+// final unsuccessful run. It is a combination of [FnInCtx] and [FnOutCtx].
 func FnIOCtx[IN, OUT any](
 	ctx context.Context,
 	fn func(context.Context, IN) (OUT, error),
@@ -327,7 +327,7 @@ func FnIOCtx[IN, OUT any](
 // Where IN is an input argument fnArg of any type and OUT is a return value of
 // any type.The initial input value for fn is passed using the fnArg argument
 // and will be refreshed using refreshFn for subsequent retries, if needed. It
-// is a combination of [FnInCtxRefr] and [FNOutCtx].
+// is a combination of [FnInCtxRefr] and [FnOutCtx].
 func FnIOCtxRefresh[IN, OUT any](
 	ctx context.Context,
 	fn func(context.Context, IN) (OUT, error),
