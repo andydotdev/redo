@@ -13,6 +13,7 @@ To this end, it has the following features:
   - Support for functional options with sensible defaults as well as a [Policy] type to predeclare a set of options for re-use.
 
 # Supported Function Types
+
 The following function types are supported:
 
 	|           Function Signature           |   Retry Method(s)    |
