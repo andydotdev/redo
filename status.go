@@ -3,6 +3,8 @@ package redo
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"math"
 	"time"
 )
 
@@ -55,15 +57,7 @@ func (s Status) Format(state fmt.State, verb rune) {
 	case 's', 'q':
 		str := s.String()
 		if state.Flag('+') {
-			switch {
-			case s.NextDelay < time.Second:
-				s.NextDelay = s.NextDelay.Truncate(time.Millisecond)
-			case s.NextDelay < time.Minute:
-				s.NextDelay = s.NextDelay.Truncate(time.Second)
-			case s.NextDelay < time.Hour:
-				s.NextDelay = s.NextDelay.Truncate(time.Hour)
-			}
-			str = fmt.Sprintf("%s - next in %v", str, s.NextDelay)
+			str = fmt.Sprintf("%s - next in %v", str, shortNext(s.NextDelay))
 		}
 		if verb == 'q' {
 			str = fmt.Sprintf("%q", str)
@@ -72,8 +66,31 @@ func (s Status) Format(state fmt.State, verb rune) {
 	}
 }
 
+// LogValue implements [slog.LogValuer], allowing the retry status to be logged as a [slog.GroupValue]
+func (s Status) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("try", s.TryNumber),
+		slog.Int("max_tries", s.MaxTries),
+		slog.Duration("next", shortNext(s.NextDelay)),
+		slog.String("last_error", s.Err.Error()),
+	)
+}
+
 // Next returns a time.Time value representing the approximate time the next
 // iteration will occur, assuming it has just failed.
 func (s Status) Next() time.Time {
 	return time.Now().Add(s.NextDelay)
+}
+
+func shortNext(d time.Duration) time.Duration {
+	switch {
+	case d < time.Second:
+		return d.Truncate(time.Millisecond)
+	case d < time.Minute:
+		return d.Truncate(time.Second)
+	case d < time.Hour:
+		d.Truncate(time.Minute)
+	}
+	// Otherwise truncate the number of hours to two decimal places.
+	return time.Duration(math.Round(d.Hours()*100) / 100)
 }
