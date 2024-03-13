@@ -32,8 +32,7 @@ The following function types are supported:
 Functions are retried by invoking them with the appropriate package-level retry method. If the function fails, it will be run again after some delay. This process will continue until one of the following conditions occurs:
   - The function returns successfully with a nil error value.
   - The function exhausts its configured number of retries.
-  - The function is halted by a function provided with [HaltFn] or [Halt] is used to manually stop the loop.
-    manually return a fatal error.
+  - The function is halted by a [HaltFn] or [Halt] is used to manually return a fatal error.
   - The context is cancelled.
   - The refresh function, if used, fails, returning a [*RefreshError].
 
