@@ -56,22 +56,22 @@ func FirstFast(firstRetryImmediate bool) Option {
 	}
 }
 
-// HaltOn allows you to set a [Ha] to use for identifying fatal errors.
+// HaltFn allows you to set a function to use for identifying fatal errors.
 // It will be called for each error returned from the target function. If it
 // returns true, the retry loop will terminate immediately. Defaults to nil,
 // which will perform no checks.
-func HaltOn(checkFn func(error) bool) Option {
+func HaltFn(haltFn func(error) bool) Option {
 	return func(o *opts) {
-		o.haltFn = checkFn
+		o.haltFn = haltFn
 	}
 }
 
-// HaltOnErrors is a shortcut to writing a [HaltFn] of the form
+// HaltErrors is a shortcut to writing a [HaltFn] of the form
 //
 //	func(e error) bool {
 //	    return errors.Is(e, Err1) || errors.Is(e, Err2) /* ... */
 //	}
-func HaltOnErrors(errs ...error) Option {
+func HaltErrors(errs ...error) Option {
 	return func(o *opts) {
 		o.haltFn = func(e error) bool {
 			for i := range errs {

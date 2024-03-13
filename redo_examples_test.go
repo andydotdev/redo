@@ -34,7 +34,7 @@ func ExampleHaltOn() {
 		return nil
 	}
 
-	err := redo.FnCtx(context.Background(), fnToRetry, redo.MaxTries(10), redo.HaltOn(haltFn))
+	err := redo.FnCtx(context.Background(), fnToRetry, redo.MaxTries(10), redo.HaltFn(haltFn))
 	if err != nil {
 		fmt.Printf("output: %v\n", err)
 	}

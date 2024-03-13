@@ -141,7 +141,7 @@ func FnIORefr[IN, OUT any](
 	refreshFn RefreshFn[IN],
 	options ...Option,
 ) (OUT, error) {
-	return FnIOCtxRefresh(ctx, func(_ context.Context, arg IN) (OUT, error) {
+	return FnIOCtxRefr(ctx, func(_ context.Context, arg IN) (OUT, error) {
 		return fn(arg)
 	}, fnArg, refreshFn, options...)
 }
@@ -320,7 +320,7 @@ func FnIOCtx[IN, OUT any](
 	return val, nil
 }
 
-// FnIORefresh is a retrier for functions with the signature of:
+// FnIOCtxRefr is a retrier for functions with the signature of:
 //
 //	func(context.Context, IN)(OUT, ERROR)
 //
@@ -328,7 +328,7 @@ func FnIOCtx[IN, OUT any](
 // any type.The initial input value for fn is passed using the fnArg argument
 // and will be refreshed using refreshFn for subsequent retries, if needed. It
 // is a combination of [FnInCtxRefr] and [FnOutCtx].
-func FnIOCtxRefresh[IN, OUT any](
+func FnIOCtxRefr[IN, OUT any](
 	ctx context.Context,
 	fn func(context.Context, IN) (OUT, error),
 	fnArg IN,
@@ -364,7 +364,7 @@ func Halted(e error) bool {
 }
 
 // Halt allows you to return a halting error from within the retry loop itself,
-// as an alternative to using [HaltOn]. Simply:
+// as an alternative to using [HaltFn]. Simply:
 //
 //	return retry.Halt(err)
 //
