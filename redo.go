@@ -188,7 +188,10 @@ func FnCtx(
 		}
 		try++
 		switch {
-		case errors.Is(lastErr, context.Canceled):
+		case errors.Is(lastErr, context.Canceled) || errors.Is(lastErr, context.DeadlineExceeded):
+			if opts.noCause || context.Cause(ctx) == nil {
+				return lastErr
+			}
 			return context.Cause(ctx)
 		case Halted(lastErr):
 			return lastErr

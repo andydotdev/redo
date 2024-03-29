@@ -18,6 +18,7 @@ func WithPolicy(p Policy) Option {
 		o.firstFast = p.FirstFast
 		o.haltFn = p.Halt
 		o.eachFn = p.Each
+		o.noCause = p.NoCtxCause
 	}
 }
 
@@ -58,8 +59,10 @@ func FirstFast(firstRetryImmediate bool) Option {
 
 // HaltFn allows you to set a function to use for identifying fatal errors.
 // It will be called for each error returned from the target function. If it
-// returns true, the retry loop will terminate immediately. Defaults to nil,
-// which will perform no checks.
+// returns true, the retry loop will terminate immediately. Defaults to nil.
+//
+// Note: this will not affect the processing of [context.Canceled] and
+// [context.DeadlineExceeded], which will always halt the retry loop.
 func HaltFn(haltFn func(error) bool) Option {
 	return func(o *opts) {
 		o.haltFn = haltFn
@@ -71,6 +74,9 @@ func HaltFn(haltFn func(error) bool) Option {
 //	func(e error) bool {
 //	    return errors.Is(e, Err1) || errors.Is(e, Err2) /* ... */
 //	}
+//
+// Note: [context.Canceled] and [context.DeadlineExceeded], are already
+// handled specially, so adding them using HaltErrors is a no-op.
 func HaltErrors(errs ...error) Option {
 	return func(o *opts) {
 		o.haltFn = func(e error) bool {
@@ -90,6 +96,17 @@ func HaltErrors(errs ...error) Option {
 func Each(eachFn func(Status)) Option {
 	return func(o *opts) {
 		o.eachFn = eachFn
+	}
+}
+
+// CtxCause will enable or disable automatic context cancellation cause
+// extraction.
+// If enabled, redo will call [context.Cause] on all values of
+// [context.Canceled] and [context.DeadlineExceeded] to get the underlying
+// error, if it is set. Defaults to true, which enables this behavior
+func CtxCause(enabled bool) Option {
+	return func(o *opts) {
+		o.noCause = !enabled
 	}
 }
 
@@ -116,4 +133,5 @@ type opts struct {
 	firstFast    bool
 	eachFn       func(Status)
 	haltFn       func(error) bool
+	noCause      bool
 }

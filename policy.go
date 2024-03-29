@@ -21,4 +21,6 @@ type Policy struct {
 	Halt func(error) bool
 	// Each allows you to run a function directly after each failure -- see [Each]
 	Each func(Status)
+	// NoCtxCause disables automatic extraction of context cause -- see [CtxCause]
+	NoCtxCause bool
 }

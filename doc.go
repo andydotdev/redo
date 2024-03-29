@@ -30,13 +30,13 @@ The following function types are supported:
 # Retry Workflow
 
 Functions are retried by invoking them with the appropriate package-level retry method. If the function fails, it will be run again after some delay. This process will continue until one of the following conditions occurs:
-  - The function returns successfully with a nil error value.
+  - The function returns with a nil error value.
   - The function exhausts its configured number of retries.
   - The function is halted by a [HaltFn] or [Halt] is used to manually return a fatal error.
-  - The context is cancelled.
+  - The context is cancelled, or its deadline is exceeded.
   - The refresh function, if used, fails, returning a [*RefreshError].
 
-In the case of context cancellation, context.Cause will be called on the
-context to get the underlying error, if set.
+In the case of context cancellation, [context.Cause] will be called on the
+context as a convenience to get the underlying error. To disable this, see [CtxCause].
 */
 package redo
