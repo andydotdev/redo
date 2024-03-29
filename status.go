@@ -54,7 +54,7 @@ func (s Status) String() string {
 // [MaxTries] is set.
 func (s Status) Format(state fmt.State, verb rune) {
 	switch verb {
-	case 's', 'q':
+	case 's', 'v', 'q':
 		str := s.String()
 		if state.Flag('+') {
 			str = fmt.Sprintf("%s - next in %v", str, shortNext(s.NextDelay))
