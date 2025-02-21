@@ -89,7 +89,7 @@ func shortNext(d time.Duration) time.Duration {
 	case d < time.Minute:
 		return d.Truncate(time.Second)
 	case d < time.Hour:
-		d.Truncate(time.Minute)
+		return d.Truncate(time.Minute)
 	}
 	// Otherwise truncate the number of hours to two decimal places.
 	return time.Duration(math.Round(d.Hours()*100) / 100)
