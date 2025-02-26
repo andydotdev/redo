@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"time"
 )
 
@@ -83,14 +82,8 @@ func (s Status) Next() time.Time {
 }
 
 func shortNext(d time.Duration) time.Duration {
-	switch {
-	case d < time.Second:
-		return d.Truncate(time.Millisecond)
-	case d < time.Minute:
-		return d.Truncate(time.Second)
-	case d < time.Hour:
-		return d.Truncate(time.Minute)
+	if d < time.Second {
+		return d
 	}
-	// Otherwise truncate the number of hours to two decimal places.
-	return time.Duration(math.Round(d.Hours()*100) / 100)
+	return d.Round(time.Second)
 }
