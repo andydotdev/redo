@@ -163,14 +163,14 @@ func FnCtx(
 		o(opts)
 	}
 	applyDefaults(opts)
-	backoff := backoff.New(opts.initialDelay, opts.maxDelay, opts.firstFast)
+	nextBackoff := backoff.New(opts.initialDelay, opts.maxDelay, opts.firstFast)
 	t := time.NewTimer(DefaultMaxDelay)
 	t.Stop()
 	try := 0
 	var lastErr error
 	for {
 		// prefetch the next delay so that the user can see it in the stats.
-		delay := backoff()
+		delay := nextBackoff()
 		status := Status{
 			TryNumber: try + 1,
 			MaxTries:  opts.maxTries,
