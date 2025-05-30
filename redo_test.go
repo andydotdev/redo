@@ -11,8 +11,6 @@ import (
 )
 
 func TestCtxCancel(t *testing.T) {
-	const maxTries = 3
-
 	waitOrCancel := func(ctx context.Context) error {
 		select {
 		case <-time.After(10 * time.Millisecond):
@@ -28,8 +26,15 @@ func TestCtxCancel(t *testing.T) {
 		return waitOrCancel(innerTimeoutCtx)
 	}
 
+	testPolicy := redo.Policy{
+		InitialDelay: 10 * time.Microsecond,
+		MaxDelay:     10 * time.Millisecond,
+		MaxTries:     3,
+		FirstFast:    true,
+	}
+
 	t.Run("InnerCtxCancelContinues", func(t *testing.T) {
-		err := redo.FnCtx(context.Background(), inner, redo.MaxTries(maxTries))
+		err := redo.FnCtx(context.Background(), inner, redo.WithPolicy(testPolicy))
 		assert(t, errors.Is(err, context.DeadlineExceeded))
 		assert(t, redo.Exhausted(err), "should reach MaxTries")
 	})
@@ -37,7 +42,7 @@ func TestCtxCancel(t *testing.T) {
 	t.Run("OuterCtxCancelHalts", func(t *testing.T) {
 		outerTimeoutCtx, cf := context.WithTimeout(context.Background(), 1)
 		defer cf()
-		err := redo.FnCtx(outerTimeoutCtx, inner, redo.MaxTries(maxTries))
+		err := redo.FnCtx(outerTimeoutCtx, inner, redo.WithPolicy(testPolicy))
 		assert(t, errors.Is(err, context.DeadlineExceeded))
 		assert(t, !redo.Exhausted(err), "should not reach MaxTries")
 	})
