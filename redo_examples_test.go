@@ -21,11 +21,7 @@ func maybeAFatalError() error {
 	return fmt.Errorf("temporary failure")
 }
 
-func ExampleHaltOn() {
-	haltFn := func(err error) bool {
-		return errors.Is(err, ErrIDontLike)
-	}
-
+func ExampleErrorHandler() {
 	fnToRetry := func(ctx context.Context) error {
 		if err := maybeAFatalError(); err != nil {
 			fmt.Printf("there was a problem: %v\n", err)
@@ -34,7 +30,7 @@ func ExampleHaltOn() {
 		return nil
 	}
 
-	err := redo.FnCtx(context.Background(), fnToRetry, redo.MaxTries(10), redo.HaltFn(haltFn))
+	err := redo.FnCtx(context.Background(), fnToRetry, redo.MaxTries(10), redo.ErrorHandler(redo.HaltIfErrIs(ErrIDontLike)))
 	if err != nil {
 		fmt.Printf("output: %v\n", err)
 	}
