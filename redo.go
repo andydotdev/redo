@@ -2,7 +2,6 @@ package redo
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"andy.dev/redo/backoff"
@@ -162,15 +161,16 @@ func FnCtx(
 	for _, o := range options {
 		o(opts)
 	}
+	done := ctx.Done()
 	applyDefaults(opts)
-	backoff := backoff.New(opts.initialDelay, opts.maxDelay, opts.firstFast)
+	nextBackoff := backoff.New(opts.initialDelay, opts.maxDelay, opts.firstFast)
 	t := time.NewTimer(DefaultMaxDelay)
 	t.Stop()
 	try := 0
 	var lastErr error
 	for {
 		// prefetch the next delay so that the user can see it in the stats.
-		delay := backoff()
+		delay := nextBackoff()
 		status := Status{
 			TryNumber: try + 1,
 			MaxTries:  opts.maxTries,
@@ -188,11 +188,6 @@ func FnCtx(
 		}
 		try++
 		switch {
-		case errors.Is(lastErr, context.Canceled) || errors.Is(lastErr, context.DeadlineExceeded):
-			if opts.noCause || context.Cause(ctx) == nil {
-				return lastErr
-			}
-			return context.Cause(ctx)
 		case Halted(lastErr):
 			return lastErr
 		case opts.haltFn != nil && opts.haltFn(lastErr):
@@ -202,12 +197,26 @@ func FnCtx(
 		}
 		t.Reset(delay)
 		select {
-		case <-ctx.Done():
+		case <-done:
 			if !t.Stop() {
 				<-t.C
 			}
+			if opts.noCause {
+				return ctx.Err()
+			}
 			return context.Cause(ctx)
 		case <-t.C:
+			select {
+			case <-done:
+				if !t.Stop() {
+					<-t.C
+				}
+				if opts.noCause {
+					return ctx.Err()
+				}
+				return context.Cause(ctx)
+			default:
+			}
 			continue
 		}
 	}
