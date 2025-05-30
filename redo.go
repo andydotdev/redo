@@ -2,6 +2,7 @@ package redo
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"andy.dev/redo/backoff"
@@ -12,6 +13,18 @@ const (
 	DefaultMaxDelay     = 20 * time.Minute
 	DefaultMaxTries     = 10
 )
+
+// RetryAction is the result returned from OnErrFn
+type RetryAction int
+
+const (
+	HaltRetrying RetryAction = iota
+	ContinueRetrying
+)
+
+// ErrorHandlerFn is a function consumes an error and returns whether or not the
+// retry loop should continues.
+type ErrorHandlerFn func(error) RetryAction
 
 type RetryFn interface {
 	func() error | func(context.Context) error
@@ -190,7 +203,7 @@ func FnCtx(
 		switch {
 		case Halted(lastErr):
 			return lastErr
-		case opts.haltFn != nil && opts.haltFn(lastErr):
+		case opts.errHandler != nil && opts.errHandler(lastErr) != ContinueRetrying:
 			return Halt(lastErr)
 		case opts.maxTries > 0 && try == opts.maxTries:
 			return errExhausted(lastErr)
@@ -383,4 +396,28 @@ func Halted(e error) bool {
 // To stop the retry run immediately.
 func Halt(e error) *haltErr {
 	return &haltErr{e}
+}
+
+// HaltIfErrIs is a convenience function for use with [ErrorHandler] to halt if
+// [errors.Is] returns true for any of the given errors.
+//
+//	ErrorHandler(HaldIfErrIs(MyBadError, MyTerribleError))
+//
+// Is the equivalent of writing
+//
+//	ErrorHandler(func(err error) RetryAction{
+//		if errors.Is(err, MyBadError) || errors.Is(err, MyTerribleError) {
+//			return HaltRetrying
+//		}
+//		return ContinueRetrying
+//	})
+func HaltIfErrIs(haltingErrors ...error) ErrorHandlerFn {
+	return func(err error) RetryAction {
+		for i := range haltingErrors {
+			if errors.Is(err, haltingErrors[i]) {
+				return HaltRetrying
+			}
+		}
+		return ContinueRetrying
+	}
 }
