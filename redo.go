@@ -164,7 +164,8 @@ func FnCtx(
 	done := ctx.Done()
 	applyDefaults(opts)
 	nextBackoff := backoff.New(opts.initialDelay, opts.maxDelay, opts.firstFast)
-	t := time.NewTimer(DefaultMaxDelay)
+	// prep timer for re-use
+	t := time.NewTimer(525600 * time.Minute)
 	t.Stop()
 	try := 0
 	var lastErr error
@@ -198,9 +199,7 @@ func FnCtx(
 		t.Reset(delay)
 		select {
 		case <-done:
-			if !t.Stop() {
-				<-t.C
-			}
+			t.Stop()
 			if opts.noCause {
 				return ctx.Err()
 			}
@@ -208,9 +207,7 @@ func FnCtx(
 		case <-t.C:
 			select {
 			case <-done:
-				if !t.Stop() {
-					<-t.C
-				}
+				t.Stop()
 				if opts.noCause {
 					return ctx.Err()
 				}
