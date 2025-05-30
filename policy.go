@@ -17,8 +17,8 @@ type Policy struct {
 	// Whether to retry the first time immdiaitely.
 	// Default: false
 	FirstFast bool
-	// Halt allows you to set a function to check for fatal errors -- see [Halt]
-	Halt func(error) bool
+	// ErrorHandler allows you provide one or more functions to check for errors -- see [ErrorHandler]
+	ErrorHandler ErrorHandlerFn
 	// Each allows you to run a function directly after each failure -- see [Each]
 	Each func(Status)
 	// NoCtxCause disables automatic extraction of context cause -- see [CtxCause]

@@ -1,7 +1,6 @@
 package redo
 
 import (
-	"errors"
 	"time"
 )
 
@@ -16,7 +15,7 @@ func WithPolicy(p Policy) Option {
 		o.maxDelay = p.MaxDelay
 		o.maxTries = p.MaxTries
 		o.firstFast = p.FirstFast
-		o.haltFn = p.Halt
+		o.errHandler = p.ErrorHandler
 		o.eachFn = p.Each
 		o.noCause = p.NoCtxCause
 	}
@@ -57,36 +56,13 @@ func FirstFast(firstRetryImmediate bool) Option {
 	}
 }
 
-// HaltFn allows you to set a function to use for identifying fatal errors.
-// It will be called for each error returned from the target function. If it
-// returns true, the retry loop will terminate immediately. Defaults to nil.
-//
-// Note: this will not affect the processing of [context.Canceled] and
-// [context.DeadlineExceeded], which will always halt the retry loop.
-func HaltFn(haltFn func(error) bool) Option {
+// ErrorHandler allows you to set a function to determine retry behavior on errors.
+// It will be called for each error returned from the target function.
+// A return value of [ContinueRetrying] will resume the retry loop, while a value of [HaltRetrying]
+// will terminate the retry loop immediately.
+func ErrorHandler(handler ErrorHandlerFn) Option {
 	return func(o *opts) {
-		o.haltFn = haltFn
-	}
-}
-
-// HaltErrors is a shortcut to writing a [HaltFn] of the form
-//
-//	func(e error) bool {
-//	    return errors.Is(e, Err1) || errors.Is(e, Err2) /* ... */
-//	}
-//
-// Note: [context.Canceled] and [context.DeadlineExceeded], are already
-// handled specially, so adding them using HaltErrors is a no-op.
-func HaltErrors(errs ...error) Option {
-	return func(o *opts) {
-		o.haltFn = func(e error) bool {
-			for i := range errs {
-				if errors.Is(e, errs[i]) {
-					return true
-				}
-			}
-			return false
-		}
+		o.errHandler = handler
 	}
 }
 
@@ -132,6 +108,6 @@ type opts struct {
 	maxTries     int
 	firstFast    bool
 	eachFn       func(Status)
-	haltFn       func(error) bool
+	errHandler   ErrorHandlerFn
 	noCause      bool
 }
